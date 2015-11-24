@@ -2,6 +2,7 @@
   (:require [clojure.string :as string]
             [clojure.walk :as walk]
             [korma.sql.utils :as utils]
+            [clojure.java.jdbc :as jdbc]
             [korma.db :as db]))
 
 ;;*****************************************************
@@ -276,7 +277,12 @@
 
 (defn insert-values-clause [ks vs]
   (for [v vs]
-    (wrap-values (map #(get v %) ks))))
+    (wrap-values
+     (map #(let [value (get v %)]
+             (if (satisfies? jdbc/ISQLValue v)
+               (utils/generated (parameterize value))
+               value))
+          ks))))
 
 ;;*****************************************************
 ;; Query types
@@ -316,7 +322,11 @@
 
 (defn sql-set [query]
   (let [fields (for [[k v] (sort (:set-fields query))]
-                 [(utils/generated (field-identifier k)) (utils/generated (str-value v))])
+                 [(utils/generated (field-identifier k))
+                  (utils/generated
+                   (if (satisfies? jdbc/ISQLValue v)
+                     (parameterize v)
+                     (str-value v)))])
         clauses (map set= fields)
         clauses-str (utils/comma-separated clauses)
         neue-sql (str " SET " clauses-str)]

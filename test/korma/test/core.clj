@@ -455,7 +455,7 @@
         {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [false]}
         (update user2 (set-fields {:blah false}))
 
-        {:sql-str "UPDATE \"users\" SET \"blah\" = NULL" :params []}
+        {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [nil]}
         (update user2 (set-fields {:blah nil}))
 
         {:sql-str "UPDATE \"users\" SET \"blah\" = ?" :params [true]}
