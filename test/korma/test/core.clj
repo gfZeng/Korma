@@ -154,7 +154,7 @@
         (insert users
                 (values [{:first "chris" :last "granger"}
                          {:last "jordan" :first "michael"}]))
-        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, NULL), (?, ?)"
+        "INSERT INTO \"users\" (\"first\", \"last\") VALUES (?, ?), (?, ?)"
         (insert users
                 (values [{:first "icarus"}
                          {:first "chris" :last "granger"}]))
@@ -718,10 +718,10 @@
 (deftest test-many-to-many-reverse
   (is (= (str "dry run :: SELECT \"mtm1\".* FROM \"mtm1\" :: []\n"
               "dry run :: SELECT \"mtm2\".* FROM \"mtm2\" "
-              "INNER JOIN \"mtm1_mtm2\" ON \"mtm1_mtm2\".\"mtm2_id\" "
-              "= \"mtm2\".\"id\" "
-              "WHERE (\"mtm1_mtm2\".\"mtm1_id\" = ?) :: [1]\n"))
-      (with-out-str (dry-run (select mtm1 (with mtm2))))))
+              "INNER JOIN \"mtm1_mtm2\" ON (\"mtm1_mtm2\".\"mtm2_id\" "
+              "= \"mtm2\".\"id\") "
+              "WHERE (\"mtm1_mtm2\".\"mtm1_id\" = ?) :: [1]\n")
+         (with-out-str (dry-run (select mtm1 (with mtm2)))))))
 
 (deftest test-many-to-many-reverse-composite-key
   (is (= (str "dry run :: SELECT \"mtm3\".* FROM \"mtm3\" :: []\n"
