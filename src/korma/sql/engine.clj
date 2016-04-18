@@ -12,6 +12,7 @@
 (def ^{:dynamic true} *bound-aliases* #{})
 (def ^{:dynamic true} *bound-params* nil)
 (def ^{:dynamic true} *bound-options* nil)
+(def ^{:dynamic true} *bound-prepare* identity)
 
 ;;*****************************************************
 ;; delimiters
@@ -149,7 +150,8 @@
              *bound-aliases* (or (:aliases ~query) #{})
              *bound-options* (or (get-in ~query [:db :options])
                                  (:options db/*current-db*)
-                                 (:options @db/_default))]
+                                 (:options @db/_default))
+             *bound-prepare* (apply comp (get-in ~query [:ent :prepares]))]
      ~@body))
 
 ;;*****************************************************
@@ -224,7 +226,9 @@
 (defn pred-map [m]
   (if (and (map? m)
            (not (utils/special-map? m)))
-    (apply pred-and (doall (map pred-vec (sort-by (comp str key) m))))
+    (apply pred-and (doall (map pred-vec
+                                (sort-by (comp str key)
+                                         (*bound-prepare* m)))))
     m))
 
 (defn parse-where [form]
