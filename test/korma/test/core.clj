@@ -469,7 +469,9 @@
 
         "SELECT \"users\".* FROM \"users\" WHERE (MONTH(create_date) = ? AND YEAR(create_date) = ?)"
         (select user2 (where {(raw "YEAR(create_date)")  2013
-                              (raw "MONTH(create_date)") 12})))))
+                              (raw "MONTH(create_date)") 12}))
+        (raw "YEAR(create_date)")
+        (raw (raw "YEAR(create_date)")))))
 
 (deftest pk-dry-run
   (let [result (with-out-str
