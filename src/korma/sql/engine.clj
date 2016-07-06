@@ -12,6 +12,7 @@
 (def ^{:dynamic true} *bound-aliases* #{})
 (def ^{:dynamic true} *bound-params* nil)
 (def ^{:dynamic true} *bound-options* nil)
+(def ^{:dynamic true} *bound-prepare* nil)
 
 ;;*****************************************************
 ;; delimiters
@@ -88,11 +89,13 @@
         (str (table-identifier table) "." field-name))
       field-name)))
 
-(defn try-prefix [v]
-  (if (and (keyword? v)
-           *bound-table*)
-    (utils/generated (prefix *bound-table* v))
-    v))
+(defn try-prefix
+  ([v] (try-prefix nil v))
+  ([k v]
+   (if (and (keyword? v)
+            *bound-table*)
+     (utils/generated (prefix *bound-table* v))
+     (if k (get (*bound-prepare* {k v}) k) v))))
 
 (defn alias-clause [alias]
   (when alias
@@ -143,13 +146,14 @@
 ;;*****************************************************
 
 (defmacro bind-query [query & body]
-  `(binding [*bound-table* (if (= :select (:type ~query))
-                             (table-alias ~query)
-                             (:table ~query))
+  `(binding [*bound-table*   (if (= :select (:type ~query))
+                               (table-alias ~query)
+                               (:table ~query))
              *bound-aliases* (or (:aliases ~query) #{})
              *bound-options* (or (get-in ~query [:db :options])
                                  (:options db/*current-db*)
-                                 (:options @db/_default))]
+                                 (:options @db/_default))
+             *bound-prepare* (apply comp (get-in ~query [:ent :prepares]))]
      ~@body))
 
 ;;*****************************************************
@@ -188,10 +192,10 @@
   (utils/wrap (string/join " " [(str-value k) op (str-value v1) sep (str-value v2)])))
 
 (defn trinary [k op v1 sep v2]
-  (utils/pred do-trinary [(try-prefix k) op (try-prefix v1) sep (try-prefix v2)]))
+  (utils/pred do-trinary [(try-prefix k) op (try-prefix k v1) sep (try-prefix k v2)]))
 
 (defn infix [k op v]
-  (utils/pred do-infix [(try-prefix k) op (try-prefix v)]))
+  (utils/pred do-infix [(try-prefix k) op (try-prefix k v)]))
 
 (defn group-with [op vs]
   (utils/pred do-group [op (doall (map pred-map vs))]))
